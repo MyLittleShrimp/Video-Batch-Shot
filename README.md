@@ -7,10 +7,10 @@
 <p align="center">给一批视频各截一张图。本地解码，不上传，8K 竖屏原片直接取帧。</p>
 
 <p align="center">
-  <a href="../../releases/latest"><img src="https://img.shields.io/badge/下载-v1.1.0%20安装包-2f6bed?style=flat-square" alt="下载"></a>
+  <a href="../../releases/latest"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD-v1.1.0%20%E5%AE%89%E8%A3%85%E5%8C%85-2f6bed?style=flat-square" alt="下载"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-0078d4?style=flat-square" alt="Windows 10 / 11">
   <img src="https://img.shields.io/badge/license-MIT-3c8f4e?style=flat-square" alt="MIT">
-  <img src="https://img.shields.io/badge/免安装依赖-内置%20ffmpeg-6a7079?style=flat-square" alt="内置 ffmpeg">
+  <img src="https://img.shields.io/badge/%E5%85%8D%E5%AE%89%E8%A3%85-%E5%86%85%E7%BD%AE%20ffmpeg-6a7079?style=flat-square" alt="内置 ffmpeg">
 </p>
 
 ---
