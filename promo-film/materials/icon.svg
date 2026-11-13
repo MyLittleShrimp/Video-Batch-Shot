@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="g" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#5b93ff"/>
+      <stop offset="0.55" stop-color="#2f6bed"/>
+      <stop offset="1" stop-color="#1b45b8"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="frame">
+      <rect x="46" y="60" width="164" height="136" rx="14"/>
+    </clipPath>
+  </defs>
+
+  <rect width="256" height="256" rx="58" fill="url(#g)"/>
+  <rect width="256" height="128" rx="58" fill="url(#shine)"/>
+
+  <!-- 屏幕取景框 -->
+  <rect x="46" y="60" width="164" height="136" rx="14" fill="#ffffff" fill-opacity="0.14"/>
+  <g clip-path="url(#frame)">
+    <circle cx="94" cy="106" r="14" fill="#ffffff"/>
+    <path d="M40 186 L104 122 L138 156 L166 130 L216 184 L216 210 L40 210 Z" fill="#ffffff" fill-opacity="0.92"/>
+  </g>
+  <rect x="46" y="60" width="164" height="136" rx="14" fill="none" stroke="#ffffff" stroke-width="12"/>
+</svg>

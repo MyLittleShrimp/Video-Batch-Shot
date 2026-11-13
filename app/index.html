@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>视频批量截图工具</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232f6bed'/%3E%3Cpath d='M6 8h8v8H6z' fill='none' stroke='%23fff' stroke-width='1.6'/%3E%3Cpath d='M15 11l3-2v6l-3-2z' fill='%23fff'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="5" width="14" height="14" rx="2"></rect>
+          <path d="M16 10l6-3v10l-6-3"></path>
+        </svg>
+      </div>
+      <div class="titles">
+        <h1>视频批量截图</h1>
+        <span class="sub" id="envInfo">正在检测环境…</span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div class="stat" id="statBox">
+        <span><b id="statCount">0</b> 个视频</span>
+        <i></i>
+        <span><b id="statDone">0</b> 已截图</span>
+      </div>
+      <button class="btn ghost" id="btnFiles">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        添加文件
+      </button>
+      <button class="btn primary" id="btnFolder">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        导入文件夹
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- 左侧设置 -->
+    <aside class="sidebar">
+      <section class="panel">
+        <div class="panel-title">截图时间点</div>
+        <div class="seg" id="modeSeg">
+          <button data-mode="middle" class="active">中间帧</button>
+          <button data-mode="first">首帧</button>
+          <button data-mode="percent">百分比</button>
+          <button data-mode="seconds">固定秒</button>
+        </div>
+        <div class="field" id="fieldPercent" hidden>
+          <div class="lab"><span>取视频 <b id="percentVal">50</b>% 处</span></div>
+          <input type="range" id="percent" min="1" max="99" value="50" />
+        </div>
+        <div class="field" id="fieldSeconds" hidden>
+          <div class="lab"><span>固定时间点（秒）</span></div>
+          <input type="number" id="seconds" value="1.5" min="0" step="0.1" class="input" />
+        </div>
+        <p class="hint" id="modeHint">默认取每个视频的正中间一帧，画面最具代表性。</p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">导出设置</div>
+        <div class="row-2">
+          <div class="field">
+            <div class="lab"><span>格式</span></div>
+            <div class="seg small" id="fmtSeg">
+              <button data-fmt="jpg" class="active">JPG</button>
+              <button data-fmt="png">PNG</button>
+            </div>
+          </div>
+          <div class="field">
+            <div class="lab"><span>尺寸</span></div>
+            <select id="maxEdge" class="input">
+              <option value="0">原始分辨率</option>
+              <option value="4096">长边 4096</option>
+              <option value="2048">长边 2048</option>
+              <option value="1080">长边 1080</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" id="fieldQuality">
+          <div class="lab"><span>JPG 质量 <b id="qualityVal">92</b></span></div>
+          <input type="range" id="quality" min="50" max="100" value="92" />
+        </div>
+        <label class="check">
+          <input type="checkbox" id="avoidBlack" checked />
+          <span>自动跳过黑场 / 纯色空帧</span>
+        </label>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">输出</div>
+        <div class="outdir">
+          <div class="path" id="outDirText" title="">自动：视频所在文件夹 / 截图导出</div>
+          <button class="btn tiny" id="btnOutDir">更改</button>
+        </div>
+        <div class="field">
+          <div class="lab"><span>同名文件</span></div>
+          <select id="overwrite" class="input">
+            <option value="1">直接覆盖</option>
+            <option value="0">自动加序号另存</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="lab"><span>并发处理 <b id="concVal">3</b></span></div>
+          <input type="range" id="concurrency" min="1" max="8" value="3" />
+        </div>
+      </section>
+
+      <div class="runbar">
+        <button class="btn run" id="btnRun">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <span id="runText">开始批量截图</span>
+        </button>
+        <button class="btn stop" id="btnStop" hidden>停止</button>
+        <div class="progress-wrap" id="progressWrap" hidden>
+          <div class="progress"><div class="bar" id="progressBar"></div></div>
+          <div class="progress-text"><span id="progressText">0 / 0</span><span id="progressTime"></span></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右侧列表 -->
+    <main class="main">
+      <div class="toolbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="search" placeholder="筛选文件名…" />
+        </div>
+        <div class="spacer"></div>
+        <button class="linkbtn" id="btnAll">全选</button>
+        <button class="linkbtn" id="btnNone">取消全选</button>
+        <button class="linkbtn danger" id="btnClear">清空列表</button>
+        <button class="btn tiny" id="btnReveal" hidden>打开导出目录</button>
+      </div>
+
+      <div class="grid-wrap">
+        <div class="empty" id="empty">
+          <div class="empty-art">
+            <svg viewBox="0 0 120 90" width="112" height="84" fill="none" stroke="currentColor" stroke-width="1.6">
+              <rect x="10" y="16" width="66" height="46" rx="4" stroke-opacity=".5"/>
+              <rect x="34" y="32" width="66" height="46" rx="4" stroke-opacity=".8" fill="currentColor" fill-opacity=".03"/>
+              <circle cx="52" cy="48" r="5" stroke-opacity=".6"/>
+              <path d="M34 70l18-16 12 10 10-8 26 20" stroke-opacity=".5"/>
+            </svg>
+          </div>
+          <h2>把要截图的视频导进来</h2>
+          <p>把视频或文件夹直接拖进窗口即可，也可用下面的按钮导入</p>
+          <div class="empty-actions">
+            <button class="btn primary" id="btnFolder2">导入文件夹</button>
+            <button class="btn ghost" id="btnFiles2">选择视频文件</button>
+          </div>
+          <div class="path-import">
+            <input id="pathInput" class="input" placeholder="或直接粘贴文件夹路径，回车导入，例如 H:\素材\AI视频" />
+          </div>
+        </div>
+        <div class="grid" id="grid"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 调整时间弹窗 -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal-mask" data-close></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <div class="modal-title" id="modalName">调整时间点</div>
+        <button class="iconbtn" data-close>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="preview-box" id="previewBox">
+          <img id="modalImg" alt="" />
+          <div class="preview-loading" id="previewLoading">正在取帧…</div>
+        </div>
+        <div class="slider-row">
+          <span class="tinfo" id="modalTime">00:00.0</span>
+          <input type="range" id="modalSlider" min="0" max="1000" value="500" />
+          <span class="tinfo dim" id="modalDur">00:00.0</span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn ghost" data-close>取消</button>
+        <button class="btn" id="modalReset">恢复自动</button>
+        <button class="btn primary" id="modalUse">就截这一帧</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 拖拽导入遮罩 -->
+  <div class="dropzone" id="dropOverlay" hidden>
+    <div class="dropzone-box">
+      <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 16V4" />
+        <path d="M7 9l5-5 5 5" />
+        <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+      </svg>
+      <h3>松开即可导入</h3>
+      <p id="dropHint">视频文件、文件夹都可以，支持一次拖多个</p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+{
+  "sources": [
+    {
+      "kind": "local",
+      "from": "C:\\Users\\panda\\WorkBuddy\\视频批量截图工具",
+      "at": "2026-11-11T14:23:41.831Z",
+      "files": [],
+      "colours": [
+        {
+          "role": "css --bg",
+          "hex": "#f5f6f8"
+        },
+        {
+          "role": "css --panel",
+          "hex": "#ffffff"
+        },
+        {
+          "role": "css --line",
+          "hex": "#e7e9ee"
+        },
+        {
+          "role": "css --line-soft",
+          "hex": "#f0f1f4"
+        },
+        {
+          "role": "css --text",
+          "hex": "#1b1e23"
+        },
+        {
+          "role": "css --sub",
+          "hex": "#71767f"
+        },
+        {
+          "role": "css --sub2",
+          "hex": "#9aa0a8"
+        },
+        {
+          "role": "css --accent",
+          "hex": "#2f6bed"
+        },
+        {
+          "role": "css --accent-soft",
+          "hex": "#eaf0fe"
+        },
+        {
+          "role": "css --green",
+          "hex": "#15a35b"
+        },
+        {
+          "role": "css --green-soft",
+          "hex": "#e7f7ee"
+        },
+        {
+          "role": "css --red",
+          "hex": "#d93a3a"
+        },
+        {
+          "role": "css --red-soft",
+          "hex": "#fdeceb"
+        },
+        {
+          "role": "used 3×",
+          "hex": "#2f6bed"
+        },
+        {
+          "role": "used 2×",
+          "hex": "#d9dde4"
+        },
+        {
+          "role": "used 2×",
+          "hex": "#a9c1f7"
+        },
+        {
+          "role": "used 2×",
+          "hex": "#d98324"
+        },
+        {
+          "role": "used 1×",
+          "hex": "#f5f6f8"
+        },
+        {
+          "role": "used 1×",
+          "hex": "#ffffff"
+        },
+        {
+          "role": "used 1×",
+          "hex": "#e7e9ee"
+        },
+        {
+          "role": "used 1×",
+          "hex": "#f0f1f4"
+        }
+      ],
+      "fonts": [
+        {
+          "family": "inherit",
+          "n": 2
+        },
+        {
+          "family": "Microsoft YaHei UI",
+          "n": 1
+        }
+      ],
+      "missing": [
+        "no logo or icon file found — look in the app bundle, the site (om grab <url>) or ask the user",
+        "no screenshots or recordings — run the product and capture it"
+      ]
+    }
+  ]
+}

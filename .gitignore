@@ -1,0 +1,39 @@
+# 依赖
+node_modules/
+desktop/node_modules/
+.pnpm-store/
+
+# 安装包与成片：体积超过 GitHub 单文件 100 MB 限制，走 Release 发布
+dist/*.exe
+dist/*.msi
+dist/*.zip
+promo-film/out/*.mp4
+
+# 宣传片中间素材（渲染用的抽帧、片段、临时音轨、与 assets 重复的采集件）
+promo-film/assets/clip/
+promo-film/assets/ui-*.png
+promo-film/assets/sound.wav
+promo-film/directions/
+promo-film/.om/
+promo-film/*.png
+promo-film/_*.png
+promo-film/materials/*.png
+promo-film/materials/frames/
+promo-film/materials/clips/
+promo-film/out/share/*.gif
+
+# 打包过程的临时产物（build/nsis 是打包必需的 NSIS 插件，保留）
+build/_test/
+desktop/_probe.js
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# 本地工作数据
+.workbuddy/
+*.log
+npm-debug.log*

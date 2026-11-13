@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="zh-CN" data-om-signature="off" data-composition-variables='[
+  {"id":"name","type":"string","label":"产品名","default":"视频批量截图"},
+  {"id":"claim","type":"string","label":"主数字","default":"12.5","group":"文案"},
+  {"id":"claimUnit","type":"string","label":"数字单位","default":"s"},
+  {"id":"count","type":"string","label":"视频数量","default":"14"},
+  {"id":"size","type":"string","label":"素材体积","default":"8.6 GB"},
+  {"id":"accent","type":"color","label":"强调色","default":"#2f6bed"},
+  {"id":"paper","type":"color","label":"底色","default":"#f5f6f8"},
+  {"id":"ink","type":"color","label":"文字色","default":"#1b1e23"},
+  {"id":"endHold","type":"number","label":"落版停留（秒）","default":4.28,"min":0.5,"max":4.28,"step":0.1,"group":"节奏"}
+]'>
+<head>
+<meta charset="utf-8">
+<title>视频批量截图 · 打样纸</title>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/om.js"></script>
+<style id="om-fonts">
+@font-face { font-family: "Noto Sans SC"; src: url("assets/fonts/NotoSansSC-500.woff") format("woff"); font-weight: 500; }
+@font-face { font-family: "Noto Sans SC"; src: url("assets/fonts/NotoSansSC-700.woff") format("woff"); font-weight: 700; }
+@font-face { font-family: "Noto Sans SC"; src: url("assets/fonts/NotoSansSC-900.woff") format("woff"); font-weight: 900; }
+@font-face { font-family: "Inter"; src: url("assets/fonts/Inter-var.woff") format("woff"); font-weight: 100 900; }
+</style>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+  #film {
+    position: relative; width: 100%; height: 100%; overflow: hidden;
+    background: var(--paper); color: var(--ink);
+    font-family: "Noto Sans SC", sans-serif; font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+  }
+  .desk { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(1200px 700px at 46% 34%, #ffffff 0%, #f1f3f7 52%, #e5e8ef 100%); }
+
+  /* ---------- 桌面层 ---------- */
+  #desk { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 960px 540px; }
+
+  /* ---------- 窗口通用 ---------- */
+  .win { position: absolute; background: #fff; border-radius: 9px; overflow: hidden;
+    box-shadow: 0 34px 80px rgba(21,26,36,.22), 0 2px 5px rgba(21,26,36,.10); }
+
+  /* ---------- 文件夹窗口 ---------- */
+  #folderWin { left: 96px; top: 84px; width: 1600px; height: 626px; }
+  .f-top { height: 48px; display: flex; align-items: center; gap: 9px; padding: 0 6px 0 15px;
+    background: #fbfbfc; border-bottom: 1px solid #e8eaef; }
+  .f-ico { position: relative; width: 19px; height: 14px; border-radius: 2px 3px 3px 3px;
+    background: linear-gradient(#ffd874, #f2b23c); }
+  .f-ico:before { content: ""; position: absolute; left: 0; top: -4px; width: 8px; height: 5px;
+    border-radius: 2px 2px 0 0; background: #f8c14c; }
+  .f-name { font-size: 13px; font-weight: 700; color: #262b33; letter-spacing: .2px; }
+  .f-wb { margin-left: auto; display: flex; }
+  .f-wb span { width: 42px; height: 28px; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #5d646e; }
+  .f-nav { height: 46px; display: flex; align-items: center; gap: 9px; padding: 0 15px;
+    border-bottom: 1px solid #eef0f4; }
+  .f-ar { font-size: 14px; color: #8f959d; letter-spacing: 0; }
+  .f-ar.dim { color: #c6cad1; }
+  .f-path { flex: 1; height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 10px;
+    background: #f5f6f8; border: 1px solid #e8eaef; border-radius: 5px;
+    font-size: 11.5px; color: #5d646e; white-space: nowrap; overflow: hidden; }
+  .f-path b { color: #1b1e23; font-weight: 700; }
+  .f-path i { font-style: normal; color: #b9bec6; font-size: 10px; }
+  .f-srch { width: 176px; height: 27px; display: flex; align-items: center; padding: 0 10px;
+    border: 1px solid #e8eaef; border-radius: 5px; font-size: 11.5px; color: #5f656e; }
+  .f-body { padding: 14px 15px 0; }
+  .f-grid { position: relative; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px 11px; }
+  .f-tile { position: relative; min-width: 0; }
+  .f-th { position: relative; width: 100%; aspect-ratio: 1/0.88; border-radius: 3px; overflow: hidden;
+    border: 1px solid #e3e6eb; background: #eceef2; }
+  .f-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .f-dur { position: absolute; right: 6px; bottom: 6px; padding: 1px 5px 2px; border-radius: 3px;
+    background: rgba(12,16,22,.62); color: #fff; font-family: "Inter"; font-weight: 700; font-size: 10px; }
+  .f-nm { margin-top: 5px; font-size: 12px; color: #2b3038; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis;
+    text-overflow: ellipsis; }
+  .f-mt { margin-top: 2px; font-family: "Inter"; font-weight: 600; font-size: 11px; color: #5b616b; }
+  .f-sel { position: absolute; inset: -4px -4px -4px -4px; border: 2px solid var(--accent);
+    background: rgba(47,107,237,.16); border-radius: 5px; opacity: 0; }
+  #marq { position: absolute; border: 1px solid var(--accent); background: rgba(47,107,237,.10);
+    transform-origin: 0 0; opacity: 0; pointer-events: none; }
+  .f-st { position: absolute; left: 0; right: 0; bottom: 0; height: 32px; display: flex;
+    align-items: center; gap: 10px; padding: 0 15px; border-top: 1px solid #eef0f4;
+    font-size: 11px; color: #5f656e; background: #fcfcfd; }
+  .f-st .right { margin-left: auto; font-family: "Inter"; font-weight: 600; font-size: 10.5px; color: #5f656e; }
+  #fSelA, #fSelB { position: absolute; left: 15px; bottom: 9px; }
+
+  /* ---------- 应用窗口 ---------- */
+  #appWin { left: 230px; top: 84px; width: 1460px; height: 790px; }
+  .a-top { height: 54px; display: flex; align-items: center; gap: 10px; padding: 0 17px;
+    border-bottom: 1px solid #eef0f4; }
+  .a-logo { width: 25px; height: 25px; border-radius: 7px; display: block; }
+  .a-ttl b { display: block; font-size: 13.5px; font-weight: 700; letter-spacing: .2px; }
+  .a-ttl span { display: block; margin-top: 2px; font-size: 10px; color: #6b717a; letter-spacing: .2px; }
+  .a-right { margin-left: auto; display: flex; align-items: center; gap: 14px;
+    font-size: 11.5px; color: #71767f; }
+  .a-right b { font-family: "Inter"; font-weight: 800; font-size: 12.5px; color: #1b1e23; }
+  .a-btn { height: 28px; padding: 0 12px; border-radius: 6px; border: 1px solid #e3e6eb;
+    display: flex; align-items: center; font-size: 11.5px; color: #3a3f47; background: #fff; }
+  .a-btn.solid { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+  #goOut { opacity: 0; }
+
+  .a-main { display: flex; height: 736px; }
+  .a-side { width: 276px; border-right: 1px solid #eef0f4; padding: 15px 17px 0;
+    display: flex; flex-direction: column; }
+  .sec { margin-bottom: 17px; }
+  .sec h4 { font-size: 10.5px; font-weight: 700; color: #3a3f47; margin-bottom: 8px; letter-spacing: .3px; }
+  .segs { display: flex; gap: 4px; }
+  .seg { padding: 4px 6px 5px; border-radius: 5px; background: #f4f5f7; font-size: 10px; color: #565c66; }
+  .seg.on { background: #eaf0fe; color: var(--accent); font-weight: 700; }
+  .sec p { margin-top: 7px; font-size: 9.5px; line-height: 1.55; color: #868c95; }
+  .row { display: flex; align-items: center; justify-content: space-between; margin-top: 7px;
+    font-size: 10.5px; color: #71767f; }
+  .row b { color: #1b1e23; font-weight: 600; max-width: 132px; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
+  .row em { font-style: normal; color: var(--accent); margin-left: 6px; }
+  .sl { margin-top: 8px; height: 3px; border-radius: 2px; background: #eceef2; position: relative; }
+  .sl i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; background: var(--accent); }
+  .sl u { position: absolute; top: -3.5px; width: 10px; height: 10px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--accent); }
+  .go { position: relative; margin: auto -17px 0; height: 38px; display: flex; align-items: center;
+    justify-content: center; background: var(--accent); }
+  .go .l1, .go .l2 { position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; gap: 6px; font-size: 12px; font-weight: 700; color: #fff; }
+  .go .l2 { opacity: 0; }
+  .go .red { position: absolute; inset: 0; background: #fdeceb; opacity: 0; }
+  .go .l2 span { color: #c62f2f; }
+
+  .a-cont { flex: 1; position: relative; padding: 13px 15px 0; display: flex; flex-direction: column; }
+  .c-row { display: flex; align-items: center; gap: 12px; margin-bottom: 11px; }
+  .c-srch { width: 268px; height: 27px; display: flex; align-items: center; padding: 0 10px;
+    border: 1px solid #e8eaef; border-radius: 5px; font-size: 11px; color: #9aa0a8; }
+  .c-tools { margin-left: auto; display: flex; gap: 14px; font-size: 10.5px; color: #868c95; }
+  .a-empty { position: absolute; left: 15px; top: 62px; right: 15px; height: 304px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    border: 1.5px dashed #d3d9e3; border-radius: 6px; background: #fbfcfd; }
+  .a-empty b { font-size: 15px; font-weight: 700; color: #565c66; letter-spacing: .3px; }
+  .a-empty span { font-size: 11.5px; color: #757b85; letter-spacing: .2px; }
+  .a-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 11px 8px; }
+  .a-tile { position: relative; min-width: 0; }
+  .a-th { position: relative; aspect-ratio: 1/0.78; border-radius: 4px; overflow: hidden;
+    border: 1px solid #e3e6eb; background: #eceef2; }
+  .a-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .a-fl { position: absolute; inset: 0; background: #fff; opacity: 0; }
+  .a-v { position: absolute; left: 4px; top: 4px; height: 15px; padding: 0 5px; border-radius: 3px;
+    background: rgba(255,255,255,.94); display: flex; align-items: center; gap: 3px;
+    font-size: 8.5px; color: #3a3f47; font-weight: 700; }
+  .a-v i { width: 4px; height: 7px; border: 1px solid #3a3f47; border-radius: 1px; }
+  .a-chip { position: absolute; right: 3px; bottom: 3px; height: 15px; padding: 0 5px; border-radius: 3px;
+    background: rgba(12,16,22,.66); color: #fff; font-family: "Inter"; font-weight: 700; font-size: 8.5px;
+    line-height: 15px; letter-spacing: .2px; }
+  .a-ok { position: absolute; right: 3px; bottom: 3px; height: 15px; padding: 0 5px 0 4px; border-radius: 3px;
+    background: #15a35b; color: #fff; font-size: 8.5px; font-weight: 700; line-height: 15px;
+    display: flex; align-items: center; gap: 3px; opacity: 0; }
+  .a-ok u { text-decoration: none; font-family: "Inter"; font-weight: 700; letter-spacing: .1px; }
+  .a-chk { position: absolute; left: 4px; bottom: 4px; width: 13px; height: 13px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 1px 3px rgba(21,26,36,.28); }
+  .a-chk:after { content: ""; position: absolute; left: 3.4px; top: 4.4px; width: 6px; height: 3.2px;
+    border-left: 1.6px solid #fff; border-bottom: 1.6px solid #fff; transform: rotate(-45deg); }
+  .a-nm { margin-top: 4px; font-size: 10px; color: #2b3038; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
+  .a-mt { margin-top: 1px; font-family: "Inter"; font-weight: 600; font-size: 9.5px; color: #6a7079; }
+
+  .a-scan { position: absolute; left: 15px; right: 15px; height: 2px; opacity: 0;
+    background: linear-gradient(90deg, rgba(47,107,237,0), #2f6bed 18%, #a8c4ff 50%, #2f6bed 82%, rgba(47,107,237,0));
+    box-shadow: 0 0 16px 4px rgba(47,107,237,.26); }
+  .a-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 30px; display: flex;
+    align-items: center; gap: 11px; padding: 0 15px; border-top: 1px solid #eef0f4; background: #fff; }
+  .a-pb { flex: 1; height: 3px; border-radius: 2px; background: #eceef2; overflow: hidden; }
+  .a-pb i { display: block; height: 100%; background: var(--accent); transform-origin: 0 50%;
+    transform: scaleX(0); }
+  .a-pl { font-family: "Inter"; font-weight: 700; font-size: 10px; color: #71767f; min-width: 44px; }
+  .a-tot { font-family: "Inter"; font-weight: 700; font-size: 10px; color: #868c95; opacity: 0; }
+
+  .a-toast { position: absolute; left: 50%; bottom: 42px; display: flex; align-items: center; gap: 7px;
+    height: 30px; padding: 0 14px; border-radius: 15px; background: #15a35b; color: #fff;
+    font-size: 11.5px; font-weight: 700; letter-spacing: .2px; white-space: nowrap; opacity: 0;
+    transform: translateX(-50%) translateY(10px); box-shadow: 0 8px 22px rgba(21,163,91,.34); }
+  .a-toast b { font-family: "Inter"; font-size: 11.5px; }
+
+  .dropOv { position: absolute; inset: 0; background: rgba(247,249,252,.62); display: flex;
+    align-items: center; justify-content: center; opacity: 0; }
+  .d-card { position: absolute; left: 292px; top: 100px; right: 30px; bottom: 54px;
+    border-radius: 8px; background: #fff; border: 2px dashed var(--accent);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; box-shadow: 0 14px 40px rgba(47,107,237,.14); }
+  .d-up { position: relative; width: 30px; height: 34px; margin-bottom: 4px; }
+  .d-up:before { content: ""; position: absolute; left: 6px; top: 0; width: 18px; height: 18px;
+    border-left: 3px solid var(--accent); border-top: 3px solid var(--accent); transform: rotate(45deg); }
+  .d-up:after { content: ""; position: absolute; left: 13px; top: 4px; width: 4px; height: 20px;
+    background: var(--accent); }
+  .d-t { font-size: 19px; font-weight: 700; color: #1b1e23; letter-spacing: .5px; margin-top: 6px; }
+  .d-s { margin-top: 7px; font-size: 11.5px; color: #868c95; letter-spacing: .2px; }
+
+  /* ---------- 拖拽 ---------- */
+  #dragWrap { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+  #cursor { position: absolute; left: 0; top: 0; width: 24px; height: 32px; opacity: 0; }
+  #dragStack { position: absolute; left: 16px; top: 12px; width: 214px; height: 220px; opacity: 0; }
+  .ds { position: absolute; width: 104px; height: 132px; border-radius: 4px; background: #fff;
+    padding: 4px; border: 1px solid #e6e9ee;
+    box-shadow: 0 12px 28px rgba(21,26,36,.24), 0 1px 3px rgba(21,26,36,.16); }
+  .ds img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 1px; }
+  .ds:nth-child(1) { left: 0; top: 16px; transform: rotate(-6deg); }
+  .ds:nth-child(2) { left: 32px; top: 6px; transform: rotate(1deg); }
+  .ds:nth-child(3) { left: 64px; top: 0; transform: rotate(7deg); }
+  .ds-pill { position: absolute; left: 134px; top: 108px; height: 24px; padding: 0 9px; border-radius: 12px;
+    background: var(--accent); color: #fff; font-family: "Inter"; font-weight: 800; font-size: 12.5px;
+    line-height: 24px; box-shadow: 0 6px 16px rgba(47,107,237,.4); }
+
+  /* ---------- 样张墙 ---------- */
+  #world { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 960px 540px; opacity: 0; }
+  #wall { position: absolute; left: -63px; top: -24px; width: 2046px; height: 764px; }
+  .card {
+    position: absolute; width: 282px; height: 376px; border-radius: 4px; background: #fff; padding: 5px;
+    box-shadow: 0 12px 34px rgba(21,26,36,.14), 0 1px 2px rgba(21,26,36,.10);
+    overflow: hidden;
+  }
+  .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .stamp {
+    position: absolute; right: 8px; top: 8px; padding: 3px 7px 4px; border-radius: 4px;
+    background: #0f8a4c; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .3px;
+    box-shadow: 0 2px 8px rgba(21,163,91,.4);
+  }
+  .card .ix {
+    position: absolute; right: 12px; bottom: 10px; font-family: "Inter", sans-serif; font-weight: 700;
+    font-size: 12px; letter-spacing: 1.6px; color: rgba(255,255,255,.86); text-shadow: 0 1px 6px rgba(0,0,0,.65);
+  }
+
+  /* ---------- 单张 ---------- */
+  #solo { position: absolute; left: 576px; top: 40px; width: 768px; height: 1028px; opacity: 0;
+          background: #fff; padding: 13px; box-shadow: 0 40px 90px rgba(21,26,36,.26); }
+  #solo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* ---------- 文字层 ---------- */
+  .hud { position: absolute; }
+
+  #hHook { left: 96px; top: 748px; opacity: 0; }
+  #hHook .n { display: flex; align-items: baseline; gap: 14px; }
+  #hHook .n b { font-family: "Inter", sans-serif; font-weight: 800; font-size: 84px; line-height: .9; letter-spacing: -3px; }
+  #hHook .n span { font-size: 30px; font-weight: 700; }
+  #hHook .m { margin-top: 16px; font-size: 20px; color: #6a6f78; letter-spacing: .5px; }
+
+  #hDrag { left: 96px; top: 868px; opacity: 0; }
+  #hDrag .t { font-size: 54px; font-weight: 700; letter-spacing: .5px; }
+  #hDrag .s { margin-top: 16px; font-size: 20px; color: #676d76; letter-spacing: .4px; }
+
+  #hImp { left: 96px; top: 916px; opacity: 0; }
+  #hImp .t { font-size: 30px; font-weight: 700; letter-spacing: .4px; }
+  #hImp .s { margin-top: 9px; font-size: 15px; color: #6a6f78; letter-spacing: .4px; }
+
+  #hRun { left: 96px; top: 916px; opacity: 0; }
+  #hRun .t { font-size: 30px; font-weight: 700; letter-spacing: .4px; }
+  #hRun .s { margin-top: 9px; font-size: 15px; color: #6a6f78; letter-spacing: .4px; }
+
+  #hDone { left: 96px; top: 800px; opacity: 0; }
+  #hDone .sm { display: flex; align-items: baseline; }
+  #hDone .sm b { font-family: "Inter", sans-serif; font-weight: 800; font-size: 72px; letter-spacing: -3px; }
+  #hDone .sm i { font-style: normal; font-family: "Inter", sans-serif; font-weight: 700; font-size: 34px; color: var(--accent); margin-left: 2px; }
+  #hDone .side { position: absolute; left: 449px; top: 34px; font-size: 21px; color: #676d76; letter-spacing: .4px; white-space: nowrap; }
+  #hDone .lb { margin-top: 8px; font-size: 19px; color: #5f656e; letter-spacing: 1.4px; }
+
+  #hMacro { left: 0; top: 0; width: 1920px; height: 1080px; opacity: 1; }
+  #hMacro .mrow { position: absolute; right: 88px; bottom: 84px; text-align: right; opacity: 0;
+    background: rgba(255,255,255,.93); padding: 14px 18px 15px; border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(21,26,36,.16); }
+  #hMacro .mrow .r { font-family: "Inter", sans-serif; font-weight: 800; font-size: 26px; letter-spacing: .5px; color: var(--ink); }
+  #hMacro .mrow .t { margin-top: 6px; font-family: "Inter", sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 2.4px; color: #676d76; }
+  #spotRow { position: absolute; right: 88px; bottom: 84px; background: rgba(255,255,255,.94);
+    padding: 13px 18px 14px; border-radius: 4px; box-shadow: 0 10px 30px rgba(21,26,36,.16);
+    opacity: 0; text-align: right; }
+  #spotRow .r { font-family: "Inter", sans-serif; font-weight: 800; font-size: 24px; letter-spacing: .4px; }
+  #spotRow .t { margin-top: 6px; font-family: "Inter", sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 2px; color: #676d76; }
+
+  #hStop { left: 96px; top: 908px; opacity: 0; }
+  #hStop b { font-family: "Inter", sans-serif; font-weight: 800; font-size: 34px; letter-spacing: 8px; }
+
+  #hDrop { left: 0; top: 0; width: 1920px; height: 1080px; opacity: 0; }
+  #hDrop .rule { position: absolute; left: 96px; top: 818px; height: 1.5px; width: 1728px; background: #dfe2e8; }
+  #hDrop .rule i { position: absolute; left: 0; top: -0.5px; height: 2.5px; width: 372px; background: var(--accent); transform-origin: 0 50%; }
+  #hDrop .num { position: absolute; left: 90px; top: 842px; display: flex; align-items: baseline; }
+  #hDrop .num b { font-family: "Inter", sans-serif; font-weight: 800; font-size: 168px; line-height: .82; letter-spacing: -9px; }
+  #hDrop .num i { font-style: normal; font-family: "Inter", sans-serif; font-weight: 700; font-size: 76px; color: var(--accent); margin-left: 5px; letter-spacing: -2px; }
+  #hDrop .claim { position: absolute; left: 545px; top: 862px; line-height: 1.25; font-size: 31px; letter-spacing: .4px; color: #3a3f47; }
+  #hDrop .claim em { font-style: normal; font-weight: 700; color: var(--ink); }
+  #hDrop .sub { position: absolute; left: 545px; top: 936px; font-size: 21px; color: #5f656e; letter-spacing: .4px; }
+  #hDrop .sub u { text-decoration: none; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #c3c7cf; vertical-align: middle; margin: 0 11px 4px; }
+
+  #hDropBrand { left: 0; top: 0; width: 1920px; height: 1080px; opacity: 0; }
+  #hDropBrand .wrap { position: absolute; right: 96px; top: 856px; display: flex; align-items: center; gap: 12px; }
+  #hDropBrand img { width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 3px 10px rgba(47,107,237,.28); }
+  #hDropBrand .nm { font-size: 23px; font-weight: 700; color: #40454d; letter-spacing: .4px; }
+  #hDropBrand .ver { font-family: "Inter", sans-serif; font-size: 14px; font-weight: 700; color: #5f656e; letter-spacing: .6px; }
+
+  #hLocal { left: 96px; top: 852px; opacity: 0; }
+  #hLocal .row { font-size: 27px; color: #71767f; letter-spacing: 1px; display: flex; align-items: center; }
+  #hLocal .row b { color: var(--ink); font-weight: 700; }
+  #hLocal .row s { text-decoration: none; display: inline-block; width: 1px; height: 19px; background: #d7dae0; margin: 0 20px; }
+
+  #hZero { left: 96px; top: 792px; width: 1200px; opacity: 0; }
+  #hZero .z { display: flex; align-items: baseline; gap: 20px; }
+  #hZero .z b { font-family: "Inter", sans-serif; font-weight: 800; font-size: 118px; line-height: .92; letter-spacing: -5px; }
+  #hZero .z span { font-size: 44px; font-weight: 700; letter-spacing: 1px; }
+  #hZero .z2 { margin-top: 10px; font-size: 21px; color: #676d76; letter-spacing: .4px; }
+
+  #hBrand { left: 96px; top: 430px; opacity: 0; }
+  #hBrand .wrap { display: flex; align-items: center; gap: 22px; }
+  #hBrand img { width: 74px; height: 74px; border-radius: 18px; box-shadow: 0 8px 26px rgba(47,107,237,.30); }
+  #hBrand .nm { font-size: 52px; font-weight: 700; letter-spacing: 1px; }
+  #hBrand .r2 { width: 322px; height: 2px; background: var(--accent); transform-origin: 0 50%; margin: 30px 0 0 2px; }
+  #hBrand .ln { margin-top: 24px; margin-left: 96px; font-size: 23px; color: #676d76; letter-spacing: 2px; }
+
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  .light { position: absolute; left: -30%; top: -30%; width: 160%; height: 170%; pointer-events: none; opacity: 0;
+    background: radial-gradient(46% 46% at 50% 50%, rgba(255,255,255,.85), rgba(255,255,255,0) 70%); }
+  .grain { position: absolute; inset: 0; pointer-events: none; opacity: .4;
+    background: radial-gradient(1500px 900px at 50% 42%, transparent 55%, rgba(21,26,36,.08) 100%); }
+</style>
+</head>
+<body>
+<div id="film" data-composition-id="vshot" data-width="1920" data-height="1080">
+  <audio id="om-sound" src="assets/sound.wav" data-start="0" data-duration="30.05" data-track-index="8" data-volume="1"></audio>
+  <div class="desk"></div>
+
+  <div id="world"><div id="wall"></div></div>
+
+  <div id="desk">
+  <!-- 文件夹窗口 -->
+  <div class="win" id="folderWin" data-om-id="folder" data-layout-allow-occlusion>
+    <div class="f-top">
+      <span class="f-ico"></span><span class="f-name">AI视频</span>
+      <span class="f-wb"><span>—</span><span>□</span><span>✕</span></span>
+    </div>
+    <div class="f-nav">
+      <span class="f-ar">‹</span><span class="f-ar dim">›</span>
+      <div class="f-path"><span>此电脑</span><i>›</i><span>H:</span><i>›</i><span>2026年项目工程</span><i>›</i><span>AI杂项</span><i>›</i><b>AI视频</b></div>
+      <div class="f-srch">搜索 AI视频</div>
+    </div>
+    <div class="f-body">
+      <div class="f-grid" id="fGrid"><div id="marq"></div></div>
+    </div>
+    <div class="f-st">
+      <span id="fSelA">0 项</span>
+      <span id="fSelB" style="opacity:0">14 项已选择</span>
+      <span class="right" id="fSize">8.6 GB</span>
+    </div>
+  </div>
+
+  <!-- 应用窗口 -->
+  <div class="win" id="appWin" data-om-id="app" data-layout-allow-occlusion>
+    <div class="a-top">
+      <img class="a-logo" src="assets/logo.png" alt="">
+      <div class="a-ttl"><b data-var-text="name">视频批量截图</b><span id="aSub">已导入 14 个视频</span></div>
+      <div class="a-right">
+        <span><b data-var-text="count">14</b> 个视频</span>
+        <span><b id="shotN">0</b> 已截图</span>
+        <span class="a-btn">+ 添加文件</span>
+        <span class="a-btn" id="goOut">打开导出目录</span>
+        <span class="a-btn solid" id="impBtn">导入文件夹</span>
+      </div>
+    </div>
+    <div class="a-main">
+      <div class="a-side">
+        <div class="sec">
+          <h4>截图时间点</h4>
+          <div class="segs"><span class="seg on">中帧</span><span class="seg">首帧</span><span class="seg">百分比</span><span class="seg">固定秒</span></div>
+          <p>默认取每个视频的正中间一帧，画面最具代表性。</p>
+        </div>
+        <div class="sec">
+          <h4>导出设置</h4>
+          <div class="segs"><span class="seg on">JPG</span><span class="seg">PNG</span></div>
+          <div class="row"><span>尺寸</span><b>原始分辨率</b></div>
+          <div class="row"><span>JPEG 质量</span><b>92</b></div>
+          <div class="sl"><i style="width:62%"></i><u style="left:calc(62% - 5px)"></u></div>
+        </div>
+        <div class="sec">
+          <h4>输出</h4>
+          <div class="row"><span>目录</span><b>H:\2026年项目工程\AI…</b><em>更改</em></div>
+          <div class="row"><span>同名文件</span><b>直接覆盖</b></div>
+          <div class="row"><span>并发处理</span><b>3</b></div>
+          <div class="sl"><i style="width:30%"></i><u style="left:calc(30% - 5px)"></u></div>
+        </div>
+        <div class="go" id="goBtn">
+          <span class="red"></span>
+          <span class="l1">▶ 开始批量截图</span>
+          <span class="l2"><span>■ 停止</span></span>
+        </div>
+      </div>
+      <div class="a-cont">
+        <div class="c-row">
+          <div class="c-srch">筛选文件名…</div>
+          <div class="c-tools"><span>全选</span><span>取消全选</span><span>清空列表</span></div>
+        </div>
+        <div class="a-empty" id="aEmpty"><b>还没有导入视频</b><span>把文件或文件夹拖进这个窗口，也可以点右上角「导入文件夹」</span></div>
+        <div class="a-grid" id="aGrid"></div>
+        <div class="a-scan" id="aScan"></div>
+        <div class="a-prog">
+          <span class="a-pl" id="progN">0 / 14</span>
+          <span class="a-pb"><i id="progBar"></i></span>
+          <span class="a-tot" id="progT">12.5s</span>
+        </div>
+        <div class="a-toast" id="aToast">全部完成，共 14 张 <b>(12.5s)</b></div>
+      </div>
+    </div>
+    <div class="dropOv" id="dropOv" data-layout-allow-occlusion>
+      <div class="d-card">
+        <div class="d-up"></div>
+        <div class="d-t">松开即可导入</div>
+        <div class="d-s">视频文件、文件夹都可以，支持一次拖多个</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 拖拽 -->
+  <div id="dragWrap">
+    <div id="dragStack"><div class="ds"><img alt=""></div><div class="ds"><img alt=""></div><div class="ds"><img alt=""></div><div class="ds-pill">+14</div></div>
+    <div id="cursor"><svg width="24" height="32" viewBox="0 0 24 32"><path d="M2 2 L2 24.5 L8.4 18.2 L13.3 29.4 L17.6 27.4 L12.7 16.4 L21.4 16.4 Z" fill="#ffffff" stroke="#1b1e23" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+  </div>
+  </div>
+
+  <div id="solo" data-layout-allow-occlusion><img src="assets/img/img02.jpg" alt=""></div>
+
+  <div class="hud" id="hHook" data-om-id="hook">
+    <div class="n"><b data-var-text="count">14</b><span>个视频</span></div>
+    <div class="m"><span data-var-text="size">8.6 GB</span> · 8K 竖屏 · 一个都还没截</div>
+  </div>
+
+  <div class="hud" id="hDrag" data-om-id="drag">
+    <div class="t">拖进去就行</div>
+    <div class="s">不进浏览器、不复制、不转码，直接按路径解码</div>
+  </div>
+
+  <div class="hud" id="hImp" data-om-id="import">
+    <div class="t">松手就排好队</div>
+    <div class="s">14 个文件，8.6 GB，一次拖进来</div>
+  </div>
+
+  <div class="hud" id="hRun" data-om-id="run">
+    <div class="t">按原始分辨率出图</div>
+    <div class="s">6144×8192 从原片解出，不是把封面放大</div>
+  </div>
+
+  <div class="hud" id="hDone" data-om-id="done">
+    <div class="sm"><b data-var-text="claim">12.5</b><i data-var-text="claimUnit">s</i></div>
+    <div class="lb">14 / 14 已导出</div>
+    <div class="side">原分辨率出图 · JPG / PNG · 尺寸可选</div>
+  </div>
+
+  <div class="hud" id="hMacro" data-om-id="macro"></div>
+  <div id="spotRow"><div class="r">6144 × 8192</div><div class="t">10.0s · 680 MB · 原分辨率</div></div>
+
+  <div class="hud" id="hStop" data-om-id="stop"><b>8K</b></div>
+
+  <div class="hud" id="hDrop" data-om-id="card">
+    <div class="rule"><i></i></div>
+    <div class="num"><b data-var-text="claim">12.5</b><i data-var-text="claimUnit">s</i></div>
+    <div class="claim"><span data-var-text="count">14</span> 个 <em>8K 竖屏视频</em>，全部出图</div>
+    <div class="sub"><span data-var-text="size">8.6 GB</span> 原片按路径直读<u></u>不复制<u></u>不上传</div>
+  </div>
+
+  <div class="hud" id="hDropBrand">
+    <div class="wrap"><img src="assets/logo.png" alt=""><span class="nm" data-var-text="name">视频批量截图</span><span class="ver">v1.1.0</span></div>
+  </div>
+
+  <div class="hud" id="hLocal" data-om-id="local">
+    <div class="row"><b>不上传</b><s></s><b>不复制</b><s></s><b>不压画质</b></div>
+  </div>
+
+  <div class="hud" id="hZero" data-om-id="zero">
+    <div class="z"><b>0</b><span>字节上传</span></div>
+    <div class="z2">8.6 GB 原片就在你自己的硬盘上</div>
+  </div>
+
+  <div class="hud" id="hBrand" data-om-id="brand">
+    <div class="wrap"><img src="assets/logo.png" alt=""><div class="nm" data-var-text="name">视频批量截图</div></div>
+    <div class="r2"></div>
+    <div class="ln">本地解码 · 批量出图 · v1.1.0</div>
+  </div>
+
+  <div class="light" id="light"></div>
+  <div class="flash" id="flash"></div>
+  <div class="grain"></div>
+</div>
+
+
+<script type="text/vnd.abc" id="om-score">
+X:1
+T:video-batch-screenshot · proof sheet
+M:4/4
+L:1/8
+Q:1/4=112
+K:Am
+V:PUL inst=guzheng gain=0.45
+!mark:hook! !mp! A,E A,E A,E A,E | !mark:drag! F,C F,C F,C F,C | !mark:import! !ff! C,G C,G C,G C,G | !mark:run! G,D G,D G,D G,D | !mark:shoot! A,E A,E A,E A,E | !mark:done! F,C F,C F,C F,C | !mark:burst! !ff! C,G C,G C,G C,G | G,D G,D G,D G,D | !mark:stop! z8 | !mark:drop! !ff! A,E A,E A,E A,E | !mark:local! F,C F,C F,C F,C | !mark:zero! C,G C,G C,G C,G | !mark:brand! G,D G,D G,D G,D | !p! A,E A,E z4 |
+V:PAD inst=lowstr gain=0.40
+!pp! A,4 C4 | F,4 A,4 | !mp! C,4 G,4 | G,4 B,4 | A,4 C4 | F,4 A,4 | !f! C,4 G,4 | G,4 B,4 | !pp! A,8 | !mf! A,4 C4 | F,4 A,4 | C,4 G,4 | G,4 B,4 | !p! A,8 |
+V:DRM inst=drums kit=cinematic gain=0.55
+!pp! ^C,,2 z2 ^C,,2 z2 | ^C,,2 z2 z4 | !ff! [C,,^F,,] ^F,, [D,,^F,,] ^F,, [C,,^F,,] ^F,, [D,,^F,,] ^F,, | [C,,^F,,] ^F,, [D,,^F,,] ^F,, [C,,^F,,] ^F,, [D,,^F,,] ^A,, | [C,,^F,,] ^F,, [D,,^F,,] ^F,, [C,,^F,,] ^F,, [D,,^F,,] ^F,, | !f! [C,,^F,,] ^F,, [D,,^F,,] ^F,, [C,,^F,,] ^F,, [D,,^F,,] ^F,, | [C,,^F,^C,] ^F,, [D,,^F,,] ^F,, [C,,^F,,] ^F,, [D,,^F,,] ^A,, | [C,,^F,^A,,] ^F,, [D,,^F,,] ^F,, [C,,^F,,] ^F,, [D,,^F,,] ^A,, | z8 | !hit! !ff! [C,,^C,]2 [^F,,]2 [D,,^F,,]2 [^F,,]2 | [C,,^F,,] ^F,, [D,,^F,,] ^F,, [C,,^F,,] ^F,, [D,,^F,,] ^F,, | [C,,^F,,] ^F,, [D,,^F,,] ^F,, [C,,^F,,] ^F,, [D,,^F,,] ^F,, | [C,,^F,,] ^F,, [D,,^F,,] ^F,, [C,,^F,,] ^F,, [D,,^F,,] ^A,, | [C,,^C,]8 |
+V:LED inst=marimba gain=0.7 role=melody
+Z2 | !mp! A2 c2 e2 d2 | e2 d2 c2 A2 | A2 c2 e2 d2 | !mf! e2 d2 c2 A2 | !f! A2 c2 e2 d2 | g2 e2 d2 z2 | z8 | !ff! a2 e2 d2 c2 | A2 c2 e2 d2 | e2 d2 c2 A2 | d2 e2 g2 e2 | !p! A,8 |
+</script>
+
+<script>
+const V = OM.vars();
+const BPM = 112;
+const BEAT = 60 / BPM;
+const BAR = BEAT * 4;
+const at = (bar, beat) => (bar - 1) * BAR + (beat - 1) * BEAT;
+
+const T = {
+  hook: at(1, 1), sel: at(1, 2), hookTxt: at(1, 3),
+  drag: at(2, 1), over: at(2, 3),
+  imp: at(3, 1),
+  run: at(4, 1),
+  shoot: at(5, 1),
+  done: at(6, 1), small: at(6, 4),
+  burst: at(7, 1),
+  stop: at(9, 1),
+  card: at(10, 1),
+  local: at(11, 1),
+  zero: at(12, 1), brand: at(13, 1), hold: at(14, 1),
+  end: at(15, 1)
+};
+
+/* 真实素材元数据：14 支原片的文件名 / 分辨率 / 时长 / 体积（ffprobe 实测） */
+const DATA = [
+  { f: '06_4.00x_4992x6656_ahq-11.mp4', w: 4992, h: 6656, mb: 513, d: 10 },
+  { f: '07城隍庙_4.00x_4992x6656_ahq-11.mp4', w: 4992, h: 6656, mb: 508, d: 10 },
+  { f: '08_4.00x_3336x4448_ahq-11.mp4', w: 3336, h: 4448, mb: 365, d: 15 },
+  { f: '30 fps - Seedance 2_5 - __ 34_10___ 4K_2.00x_6144x8192_ahq-11.mp4', w: 6144, h: 8192, mb: 680, d: 10 },
+  { f: 'Kling O3 4K - 34 vertical aspect ratio_ ancient Chinese blue-green landscape_2.00x_5112x6488_ahq-11.mp4', w: 5112, h: 6488, mb: 862, d: 15 },
+  { f: 'Kling O3 4K - __34_8K___CG_15 (2)_2.00x_4696x7056_ahq-11.mp4', w: 4696, h: 7056, mb: 907, d: 15 },
+  { f: 'Seedance 2_0 - 34 ___8K ___15 ___ _Image 1_4.00x_3336x4448_ahq-11.mp4', w: 3336, h: 4448, mb: 311, d: 15 },
+  { f: 'Seedance 2_0 - 34 ___8K ___15 ____ _Image 1-0821_4.00x_3336x4448_ahq-11.mp4', w: 3336, h: 4448, mb: 452, d: 15 },
+  { f: 'Seedance 2_0 - 34 _____8K ____15-2_4.00x_3336x4448_ahq-11.mp4', w: 3336, h: 4448, mb: 381, d: 15 },
+  { f: 'Seedance 2_0 - 34 _____8K _______10 ______Image 2_4.00x_3336x4448_ahq-11.mp4', w: 3336, h: 4448, mb: 241, d: 10 },
+  { f: 'Seedance 2_0 - __ 34_8K ___15 ______ 4_Image (3)_4.00x_3336x4448_ahq-11.mp4', w: 3336, h: 4448, mb: 409, d: 15 },
+  { f: 'Seedance 2_5 - __ 34_8K ____10___ 5_Image 5_.mov 4K_2.00x_6144x8192_ahq-11.mp4', w: 6144, h: 8192, mb: 833, d: 10 },
+  { f: 'Seedance 2_5 - __34_10 ______.mov 4K_2.00x_6144x8192_ahq-11.mp4', w: 6144, h: 8192, mb: 725, d: 10 },
+  { f: 'Seedance 2_5 - __34_15 ____.mov 4K_2.00x_6144x8192_ahq-11.mp4', w: 6144, h: 8192, mb: 979, d: 15 }
+];
+const img = i => 'assets/img/img' + String(i + 1).padStart(2, '0') + '.jpg';
+const stamp = d => '00:' + String(d / 2).padStart(2, '0') + (d % 2 ? '.5' : '.0');
+
+/* ---------- 文件夹里的 14 个文件 ---------- */
+const fGrid = document.getElementById('fGrid');
+DATA.forEach((m, i) => {
+  const t = document.createElement('div');
+  t.className = 'f-tile';
+  t.setAttribute('data-om-id', 'file' + String(i + 1).padStart(2, '0'));
+  const th = document.createElement('div');
+  th.className = 'f-th';
+  const im = document.createElement('img');
+  im.src = img(i); im.alt = '';
+  th.appendChild(im);
+  const du = document.createElement('span');
+  du.className = 'f-dur';
+  du.textContent = stamp(m.d);
+  th.appendChild(du);
+  const nm = document.createElement('div');
+  nm.className = 'f-nm';
+  nm.textContent = m.f;
+  const mt = document.createElement('div');
+  mt.className = 'f-mt';
+  mt.textContent = m.mb + ' MB · ' + m.d.toFixed(1) + 's';
+  const sel = document.createElement('div');
+  sel.className = 'f-sel';
+  t.appendChild(th); t.appendChild(nm); t.appendChild(mt); t.appendChild(sel);
+  fGrid.appendChild(t);
+});
+const fTiles = [...fGrid.querySelectorAll('.f-tile')];
+const fSels = [...fGrid.querySelectorAll('.f-sel')];
+
+/* ---------- 应用里的 14 张卡片 ---------- */
+const aGrid = document.getElementById('aGrid');
+DATA.forEach((m, i) => {
+  const t = document.createElement('div');
+  t.className = 'a-tile';
+  t.setAttribute('data-om-id', 'item' + String(i + 1).padStart(2, '0'));
+  const th = document.createElement('div');
+  th.className = 'a-th';
+  const im = document.createElement('img');
+  im.src = img(i); im.alt = '';
+  th.appendChild(im);
+  const v = document.createElement('span');
+  v.className = 'a-v';
+  v.innerHTML = '<i></i>竖屏';
+  th.appendChild(v);
+  const chip = document.createElement('span');
+  chip.className = 'a-chip';
+  chip.textContent = m.w + '×' + m.h;
+  th.appendChild(chip);
+  const ok = document.createElement('span');
+  ok.className = 'a-ok';
+  ok.innerHTML = '已截图 <u>' + stamp(m.d) + '</u>';
+  th.appendChild(ok);
+  const chk = document.createElement('span');
+  chk.className = 'a-chk';
+  th.appendChild(chk);
+  const fl = document.createElement('span');
+  fl.className = 'a-fl';
+  th.appendChild(fl);
+  const nm = document.createElement('div');
+  nm.className = 'a-nm';
+  nm.textContent = m.f;
+  const mt = document.createElement('div');
+  mt.className = 'a-mt';
+  mt.textContent = stamp(m.d) + ' · ' + m.mb + ' MB';
+  t.appendChild(th); t.appendChild(nm); t.appendChild(mt);
+  aGrid.appendChild(t);
+});
+const aTiles = [...aGrid.querySelectorAll('.a-tile')];
+
+/* ---------- 样张墙 ---------- */
+const CW = 282, CH = 376, GAP = 12, WALL_L = -63, WALL_T = -24;
+const wall = document.getElementById('wall');
+const cards = [];
+DATA.forEach((m, i) => {
+  const col = i % 7, row = Math.floor(i / 7);
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.setAttribute('data-om-id', 'proof' + String(i + 1).padStart(2, '0'));
+  el.style.left = (col * (CW + GAP)) + 'px';
+  el.style.top = (row * (CH + GAP)) + 'px';
+  const im = document.createElement('img');
+  im.src = img(i); im.alt = '';
+  el.appendChild(im);
+  const st = document.createElement('div');
+  st.className = 'stamp';
+  st.textContent = '已导出';
+  el.appendChild(st);
+  const ix = document.createElement('div');
+  ix.className = 'ix';
+  ix.textContent = String(i + 1).padStart(2, '0');
+  el.appendChild(ix);
+  wall.appendChild(el);
+  cards.push({
+    el, img: im, stamp: st,
+    cx: WALL_L + col * (CW + GAP) + CW / 2,
+    cy: WALL_T + row * (CH + GAP) + CH / 2,
+    res: m.w + ' × ' + m.h
+  });
+});
+
+/* ---------- 放大镜连切的数据 ---------- */
+const SHOTS = [
+  { i: 12, s: 2.6 }, { i: 3, s: 3.4 }, { i: 8, s: 2.2 }, { i: 0, s: 3.0 },
+  { i: 10, s: 2.8 }, { i: 5, s: 3.6 }, { i: 1, s: 2.4 }, { i: 13, s: 3.2 }
+];
+const macroWrap = document.getElementById('hMacro');
+SHOTS.forEach(shot => {
+  const d = document.createElement('div');
+  d.className = 'mrow';
+  d.innerHTML = '<div class="r">' + cards[shot.i].res + '</div><div class="t">原分辨率出图</div>';
+  macroWrap.appendChild(d);
+});
+const macroRows = [...macroWrap.querySelectorAll('.mrow')];
+
+/* ---------- 量尺寸（此时还没有任何 transform） ---------- */
+const filmRect = document.getElementById('film').getBoundingClientRect();
+const rel = el => { const r = el.getBoundingClientRect(); return { x: r.left - filmRect.left, y: r.top - filmRect.top, w: r.width, h: r.height }; };
+const gi = rel(fGrid);
+const f0 = rel(fTiles[0]), fN = rel(fTiles[fTiles.length - 1]);
+const foldCenter = { x: (f0.x + fN.x + fN.w) / 2, y: (f0.y + fN.y + fN.h) / 2 };
+
+/* 选中框：从第一格左上角到最后格右下角（坐标相对 .f-grid） */
+const marq = document.getElementById('marq');
+marq.style.left = (f0.x - gi.x - 4) + 'px';
+marq.style.top = (f0.y - gi.y - 4) + 'px';
+marq.style.width = ((fN.x + fN.w) - f0.x + 8) + 'px';
+marq.style.height = ((fN.y + fN.h) - f0.y + 8) + 'px';
+
+/* 应用窗口：hero 与 peek 两个位姿 */
+const APP_HERO = { x: 0, y: 0, scale: 1 };
+const APP_PEEK = { x: 0, y: 0, scale: .92 };
+const dropPt = { x: 1066, y: 596 };
+
+gsap.set('#folderWin', { opacity: 1, y: 0, scale: 1 });
+gsap.set('#appWin', { x: APP_PEEK.x, y: APP_PEEK.y, scale: APP_PEEK.scale, opacity: 0 });
+gsap.set(['#hHook', '#hDrag', '#hImp', '#hRun', '#hDone', '#hStop', '#hDrop', '#hDropBrand', '#hLocal', '#hZero', '#hBrand', '#spotRow'], { opacity: 0 });
+gsap.set('#world', { opacity: 0, scale: 1 });
+gsap.set(cards.map(c => c.stamp), { opacity: 0, scale: .4 });
+gsap.set('#dragWrap', { x: f0.x + 150, y: f0.y + 210 });
+['0', '6', '11'].forEach((n, k) => { document.querySelectorAll('#dragStack .ds img')[k].src = img(+n); });
+gsap.set('#dragStack', { opacity: 0, scale: .7 });
+gsap.set('#cursor', { opacity: 0 });
+gsap.set(fSels, { opacity: 0 });
+gsap.set(marq, { scaleX: 0, scaleY: 0, opacity: 0 });
+gsap.set('#fSelB', { opacity: 0 });
+gsap.set(aTiles, { opacity: 0, scale: .9, y: 12 });
+gsap.set('#dropOv', { opacity: 0 });
+gsap.set('#aEmpty', { opacity: 0 });
+gsap.set('#goBtn .red', { opacity: 0 });
+gsap.set('#goBtn .l2', { opacity: 0 });
+gsap.set('#progBar', { scaleX: 0 });
+gsap.set('#aScan', { opacity: 0, y: 0 });
+gsap.set('#aGrid .a-fl', { opacity: 0 });
+gsap.set('#aToast', { opacity: 0, y: 10 });
+gsap.set('#progT', { opacity: 0 });
+gsap.set('#goOut', { opacity: 0 });
+gsap.set('#solo img', { scale: 1.045 });
+gsap.set('#light', { opacity: 0, x: -260, y: 180, scale: 1 });
+
+const tl = gsap.timeline({ paused: true });
+window.__timelines['vshot'] = tl;
+
+tl.addLabel('scene:hook', T.hook);
+tl.addLabel('scene:drag', T.drag);
+tl.addLabel('scene:import', T.imp);
+tl.addLabel('scene:run', T.run);
+tl.addLabel('scene:shoot', T.shoot);
+tl.addLabel('scene:done', T.done);
+tl.addLabel('scene:burst', T.burst);
+tl.addLabel('scene:stop', T.stop);
+tl.addLabel('scene:drop', T.card);
+tl.addLabel('scene:local', T.local);
+tl.addLabel('scene:zero', T.zero);
+tl.addLabel('scene:brand', T.brand);
+
+const cam = (scale, cx, cy) => ({ scale, x: -(cx - 960) * scale, y: -(cy - 540) * scale });
+
+/* ---------- 1 · 文件夹：14 个 8K 原片 ---------- */
+tl.fromTo('#desk', { scale: 1.105, y: 20 },
+  { scale: 1, y: 0, duration: .66, ease: 'expo.out', immediateRender: false }, T.hook);
+OM.sfx('thud', T.hook, { gain: .8 });
+tl.to('#desk', { scale: 1.028, duration: 1.34, ease: 'power1.out' }, T.hook + .68);
+
+/* 光标进来 */
+tl.to('#cursor', { opacity: 1, duration: .1 }, T.sel);
+tl.to('#dragWrap', { x: f0.x - 6, y: f0.y - 8, duration: .46, ease: 'power2.inOut' }, T.sel);
+OM.sfx('tick', T.sel + .44, { gain: .5 });
+
+/* 框选 */
+tl.fromTo(marq, { scaleX: 0, scaleY: 0, opacity: 1 },
+  { scaleX: 1, scaleY: 1, duration: .62, ease: 'power2.inOut', immediateRender: false }, T.sel + .46);
+tl.to('#dragWrap', { x: fN.x + fN.w + 6, y: fN.y + fN.h + 8, duration: .62, ease: 'power2.inOut' }, T.sel + .46);
+tl.to(marq, { opacity: 0, duration: .16 }, T.sel + 1.1);
+fSels.forEach((s, i) => {
+  tl.fromTo(s, { opacity: 0 }, { opacity: 1, duration: .12, immediateRender: false }, T.sel + 1.06 + i * .012);
+});
+tl.to('#fSelB', { opacity: 1, duration: .14 }, T.sel + 1.15);
+tl.to('#fSelA', { opacity: 0, duration: .1 }, T.sel + 1.15);
+OM.sfx('pop', T.sel + 1.12, { gain: .5 });
+
+tl.fromTo('#hHook', { opacity: 0, y: 18 },
+  { opacity: 1, y: 0, duration: .42, ease: 'power3.out', immediateRender: false }, T.hook + .26);
+OM.sfx('tick', T.hook + .26, { gain: .55 });
+
+/* ---------- 2 · 拖起来，扔进软件 ---------- */
+tl.to('#hHook', { opacity: 0, y: -12, duration: .22 }, T.drag);
+tl.fromTo('#hDrag', { opacity: 0, y: 22 },
+  { opacity: 1, y: 0, duration: .34, ease: 'power3.out', immediateRender: false }, T.drag + .12);
+OM.sfx('tick', T.drag + .12, { gain: .6 });
+
+/* 窗口退开，软件醒来 */
+tl.to('#desk', { scale: 1, duration: .38, ease: 'power2.out' }, T.drag + .02);
+tl.to('#folderWin', { x: -90, y: -54, scale: .945, opacity: 0, duration: .3, ease: 'power2.in' }, T.drag + .02);
+tl.fromTo('#appWin', { opacity: 0, y: 300, scale: .86 },
+  { opacity: 1, y: 0, scale: .92, duration: .46, ease: 'expo.out', immediateRender: false }, T.drag + .02);
+OM.sfx('thud', T.drag + .5, { gain: .7 });
+
+/* 拖拽堆 */
+tl.to('#dragWrap', { x: foldCenter.x + 8, y: foldCenter.y + 16, duration: .22, ease: 'power2.inOut' }, T.drag + .02);
+tl.fromTo('#dragStack', { opacity: 0, scale: .7 },
+  { opacity: 1, scale: 1, duration: .26, ease: 'back.out(2.2)', immediateRender: false }, T.drag + .2);
+OM.sfx('pop', T.drag + .2, { gain: .6 });
+tl.to('#aEmpty', { opacity: 1, duration: .3 }, T.drag + .12);
+tl.to('#aEmpty', { opacity: 0, duration: .12 }, T.over - .14);
+
+/* 从文件夹飞向软件 */
+tl.to('#dragWrap', { x: dropPt.x, duration: .92, ease: 'power1.inOut' }, T.drag + .3);
+tl.to('#dragWrap', { y: dropPt.y, duration: .92, ease: 'power2.out' }, T.drag + .3);
+tl.to('#dragStack', { rotation: -3, duration: .92, ease: 'power1.inOut' }, T.drag + .3);
+
+/* 进入软件：拖放态 */
+tl.fromTo('#dropOv', { opacity: 0 }, { opacity: 1, duration: .16, immediateRender: false }, T.over + .01);
+tl.to('#appWin', { scale: .928, x: 0, y: 0, duration: .34, ease: 'power2.out' }, T.over);
+OM.sfx('whoosh', T.over - .06, { gain: .55 });
+tl.to('#dragStack', { y: 6, duration: .34, ease: 'sine.inOut' }, T.over + .2);
+tl.fromTo('#dropOv .d-card', { scale: 1 }, { scale: 1.035, duration: .34, ease: 'sine.inOut', yoyo: true, repeat: 1, immediateRender: false }, T.over + .3);
+tl.to('#appWin', { scale: .975, x: 0, y: 0, duration: T.imp - T.over - .42, ease: 'power1.inOut' }, T.over + .26);
+
+/* ---------- 3 · 松手：14 个落进列表 ---------- */
+tl.to('#dragStack', { opacity: 0, scale: .5, duration: .12, ease: 'power2.in' }, T.imp);
+tl.set('#flash', { opacity: .42 }, T.imp + .02);
+tl.to('#flash', { opacity: 0, duration: .16, ease: 'power2.out' }, T.imp + .06);
+tl.to('#dropOv', { opacity: 0, duration: .14 }, T.imp + .02);
+OM.sfx('thud', T.imp, { gain: 1.15 });
+tl.to('#cursor', { opacity: 0, duration: .24 }, T.imp + .2);
+
+tl.to('#hDrag', { opacity: 0, y: -10, duration: .2 }, T.imp + .02);
+
+/* 软件推到位 */
+tl.to('#appWin', { x: 0, y: 0, scale: 1, duration: .46, ease: 'expo.out' }, T.imp + .04);
+OM.sfx('hit', T.imp + .04, { gain: .8 });
+
+/* 14 张卡落位 */
+aTiles.forEach((t, i) => {
+  const tt = T.imp + .18 + i * .045;
+  tl.to(t, { opacity: 1, scale: 1, y: 0, duration: .28, ease: 'back.out(1.5)' }, tt);
+  if (i % 2 === 0) OM.sfx('tick', tt + .04, { gain: .42 });
+});
+tl.to('#appWin', { scale: 1.062, duration: T.run - T.imp - .55, ease: 'power1.out' }, T.imp + .55);
+tl.fromTo('#goBtn', { boxShadow: '0 0 0 0px rgba(47,107,237,0)' },
+  { boxShadow: '0 0 0 7px rgba(47,107,237,.20)', duration: .5, ease: 'power2.out', immediateRender: false }, T.run - .62);
+tl.to('#goBtn', { boxShadow: '0 0 0 0px rgba(47,107,237,0)', duration: .3, ease: 'power2.in' }, T.run - .1);
+
+tl.fromTo('#hImp', { opacity: 0, y: 14 },
+  { opacity: 1, y: 0, duration: .3, ease: 'power2.out', immediateRender: false }, T.imp + 1.35);
+
+/* ---------- 4 · 开始取帧 ---------- */
+tl.to('#hImp', { opacity: 0, duration: .2 }, T.run);
+tl.to('#goBtn', { scale: .96, duration: .08, ease: 'power2.in' }, T.run);
+tl.to('#goBtn', { scale: 1, duration: .12, ease: 'power2.out' }, T.run + .08);
+tl.to('#goBtn .red', { opacity: 1, duration: .16 }, T.run + .1);
+tl.to('#goBtn .l1', { opacity: 0, duration: .12 }, T.run + .1);
+tl.to('#goBtn .l2', { opacity: 1, duration: .12 }, T.run + .14);
+OM.sfx('hit', T.run + .1, { gain: .7 });
+
+tl.fromTo('#hRun', { opacity: 0, y: 14 },
+  { opacity: 1, y: 0, duration: .3, ease: 'power2.out', immediateRender: false }, T.run + .1);
+
+/* 进度条 + 计数 */
+tl.to('#progBar', { scaleX: 1, duration: 1.12, ease: 'none' }, T.run + .16);
+
+const pStart = T.run + .16, pLen = 1.12;
+const shotNEl = document.getElementById('shotN');
+const progNEl = document.getElementById('progN');
+tl.to({ p: 0 }, {
+  p: 1, duration: pLen, ease: 'none',
+  onUpdate() {
+    const p = this.targets()[0].p;
+    const n = Math.min(14, Math.floor(p * 14 + .0001));
+    if (shotNEl && shotNEl.textContent !== String(n)) shotNEl.textContent = n;
+    if (progNEl && progNEl.textContent !== n + ' / 14') progNEl.textContent = n + ' / 14';
+  }
+}, pStart);
+
+/* 每一张出图：分辨率角标换成绿色的「已截图 00:0x.x」 */
+aTiles.forEach((t, i) => {
+  const tt = pStart + i * .075;
+  tl.to(t.querySelector('.a-chip'), { opacity: 0, duration: .08 }, tt);
+  tl.fromTo(t.querySelector('.a-ok'), { opacity: 0, scale: .8 },
+    { opacity: 1, scale: 1, duration: .18, ease: 'back.out(3)', immediateRender: false }, tt + .02);
+  tl.set(t.querySelector('.a-fl'), { opacity: .5 }, tt);
+  tl.to(t.querySelector('.a-fl'), { opacity: 0, duration: .2, ease: 'power2.out' }, tt + .02);
+  OM.sfx('pop', tt + .02, { gain: .3 });
+});
+
+/* 扫描线：两趟扫过卡片区 */
+tl.set('#aScan', { opacity: .85, y: 0 }, T.run + .12);
+tl.to('#aScan', { y: 348, duration: .82, ease: 'none' }, T.run + .12);
+tl.to('#aScan', { opacity: 0, duration: .1 }, T.run + .92);
+tl.set('#aScan', { opacity: .7, y: 0 }, T.run + 1.0);
+tl.to('#aScan', { y: 348, duration: .82, ease: 'none' }, T.run + 1.0);
+tl.to('#aScan', { opacity: 0, duration: .12 }, T.run + 1.78);
+
+/* 完成 */
+tl.to('#goOut', { opacity: 1, duration: .22 }, T.run + 1.24);
+tl.fromTo('#aToast', { opacity: 0, y: 10 },
+  { opacity: 1, y: 0, duration: .3, ease: 'back.out(1.8)', immediateRender: false }, T.run + 1.32);
+tl.to('#progT', { opacity: 1, duration: .2 }, T.run + 1.36);
+OM.sfx('pop', T.run + 1.32, { gain: .7 });
+tl.to('#appWin', { scale: 1.075, duration: T.shoot - T.run - .2, ease: 'power1.out' }, T.run + .2);
+
+/* ---------- 5 · 出图：样张铺开 ---------- */
+tl.to('#appWin', { x: -620, opacity: 0, duration: .11, ease: 'power2.in' }, T.shoot);
+tl.to('#hRun', { opacity: 0, duration: .14 }, T.shoot);
+tl.set('#flash', { opacity: .5 }, T.shoot + .02);
+tl.to('#flash', { opacity: 0, duration: .18, ease: 'power2.out' }, T.shoot + .07);
+tl.fromTo('#world', { opacity: 1, x: 0, scale: 1.04 },
+  { opacity: 1, x: 0, scale: 1, duration: .38, ease: 'expo.out', immediateRender: false }, T.shoot + .12);
+OM.sfx('thud', T.shoot + .04, { gain: 1.05 });
+
+/* 一张 6144×8192 被指出来 */
+tl.fromTo('#spotRow', { opacity: 0, y: 12 },
+  { opacity: 1, y: 0, duration: .26, ease: 'power2.out', immediateRender: false }, T.shoot + .62);
+OM.sfx('tick', T.shoot + .62, { gain: .6 });
+tl.to('#spotRow', { opacity: 0, duration: .16 }, T.done - .1);
+tl.to('#world', { scale: 1.035, duration: T.done - T.shoot - .5, ease: 'power1.out' }, T.shoot + .5);
+tl.to('#world', { scale: 1.085, duration: T.burst - T.done, ease: 'power1.inOut' }, T.done);
+
+/* ---------- 6 · 12.5s + 绿章 ---------- */
+tl.fromTo('#hDone', { opacity: 0, y: 26 },
+  { opacity: 1, y: 0, duration: .28, ease: 'power3.out', immediateRender: false }, T.done);
+cards.forEach((c, i) => {
+  const t = T.done + i * BEAT * .24;
+  tl.fromTo(c.stamp, { opacity: 0, scale: 1.5 },
+    { opacity: 1, scale: 1, duration: .3, ease: 'back.out(3)', immediateRender: false }, t);
+  if (i % 2 === 0) OM.sfx('pop', t, { gain: .45 });
+});
+
+/* ---------- 7 · 放大镜连切 ---------- */
+tl.to('#hDone', { opacity: 0, duration: .14 }, T.burst);
+tl.to(cards.map(c => c.stamp), { opacity: 0, duration: .1 }, T.burst);
+
+SHOTS.forEach((shot, k) => {
+  const t = T.burst + k * BEAT;
+  const c = cards[shot.i];
+  const pose = cam(shot.s, c.cx, c.cy);
+  tl.to('#world', { x: pose.x, y: pose.y, scale: pose.scale, duration: 0.001, ease: 'none' }, t);
+  tl.set('#flash', { opacity: .62 }, t);
+  tl.to('#flash', { opacity: 0, duration: 0.1, ease: 'power2.out' }, t + 0.034);
+  tl.fromTo(macroRows[k], { opacity: 0 }, { opacity: 1, duration: 0.1, immediateRender: false }, t);
+  if (k > 0) tl.to(macroRows[k - 1], { opacity: 0, duration: 0.1 }, t);
+  OM.sfx('hit', t, { gain: 0.55 });
+});
+
+/* ---------- 8 · 停 ---------- */
+tl.to('#world', { opacity: 0, duration: 0.1, ease: 'none' }, T.stop);
+tl.to(macroRows[SHOTS.length - 1], { opacity: 0, duration: 0.1 }, T.stop);
+tl.fromTo('#solo', { opacity: 0, scale: .96 }, { opacity: 1, scale: 1, duration: 0.44, ease: 'expo.out', immediateRender: false }, T.stop);
+tl.fromTo('#solo img', { scale: 1.075, y: 14 }, { scale: 1, y: 0, duration: 1.9, ease: 'power1.out', immediateRender: false }, T.stop);
+tl.fromTo('#hStop', { opacity: 0 }, { opacity: 1, duration: 0.34, immediateRender: false }, T.stop + 0.26);
+
+/* ---------- 9 · 落 ---------- */
+tl.to('#solo', { opacity: 0, duration: 0.12, ease: 'none' }, T.card);
+tl.to('#hStop', { opacity: 0, duration: 0.1 }, T.card);
+tl.fromTo('#world', { opacity: 0, scale: 1.05, x: 0, y: 0 }, { opacity: 1, scale: 1, x: 0, y: 0, duration: 0.16, ease: 'expo.out', immediateRender: false }, T.card);
+tl.fromTo('#hDrop', { opacity: 0 }, { opacity: 1, duration: 0.1, immediateRender: false }, T.card);
+tl.fromTo('#hDropBrand', { opacity: 0 }, { opacity: 1, duration: 0.24, immediateRender: false }, T.shoot + .3);
+tl.to('#hDropBrand', { opacity: 0, duration: 0.12 }, T.burst);
+tl.to('#hDropBrand', { opacity: 1, duration: 0.1 }, T.card);
+tl.fromTo('#hDrop .num', { scale: 1.14 }, { scale: 1, duration: 0.5, ease: 'expo.out', immediateRender: false }, T.card);
+tl.fromTo('#hDrop .rule i', { scaleX: 0 }, { scaleX: 1, duration: 0.52, ease: 'expo.out', immediateRender: false }, T.card);
+OM.sfx('hit', T.card, { gain: 1 });
+OM.sfx('thud', T.card, { gain: 1.1 });
+tl.to('#world', { scale: 1.035, duration: T.local - T.card - 0.2, ease: 'power1.out' }, T.card + 0.2);
+
+/* ---------- 10 · 不上传 ---------- */
+tl.to('#hDrop .claim', { opacity: 0, duration: 0.22 }, T.local);
+tl.to('#hDrop .sub', { opacity: 0, duration: 0.22 }, T.local);
+tl.to('#hDrop .num', { opacity: 0, duration: 0.22 }, T.local);
+tl.to('#world', { opacity: .26, duration: 0.32 }, T.local);
+/* 软件带着满屏绿勾回来，当作证据 */
+tl.fromTo('#appWin', { opacity: 0, x: 470, y: 88, scale: .62 },
+  { opacity: 1, x: 120, y: 81, scale: .62, duration: .46, ease: 'expo.out', immediateRender: false }, T.local + .04);
+tl.to('#appWin', { x: 52, y: 62, scale: .70, duration: T.zero - T.local - .42, ease: 'power1.out' }, T.local + .5);
+tl.fromTo('#hLocal', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3, immediateRender: false }, T.local + 0.22);
+OM.sfx('thud', T.local, { gain: 0.75 });
+
+/* ---------- 10b · 0 字节 ---------- */
+tl.to('#hLocal', { opacity: 0, duration: 0.22 }, T.zero);
+tl.to('#appWin', { x: 560, opacity: 0, duration: .42, ease: 'power2.in' }, T.zero);
+tl.fromTo('#hZero', { opacity: 0 }, { opacity: 1, duration: 0.12, immediateRender: false }, T.zero);
+tl.fromTo('#hZero .z', { y: 26 }, { y: 0, duration: 0.4, ease: 'expo.out', immediateRender: false }, T.zero);
+tl.fromTo('#hZero .z2', { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.36, immediateRender: false }, T.zero + 0.3);
+OM.sfx('hit', T.zero, { gain: 0.85 });
+tl.to('#light', { opacity: 0, duration: 0.3 }, T.zero + 0.3);
+tl.to('#hZero .z', { scale: 1.035, duration: T.brand - T.zero - 0.2, ease: 'power1.out', transformOrigin: '0 60%' }, T.zero + 0.42);
+
+/* ---------- 11 · 落版 ---------- */
+tl.to('#world', { opacity: 0, duration: 0.42 }, T.brand);
+tl.to('#hZero', { opacity: 0, duration: 0.24 }, T.brand);
+tl.to('#hLocal', { opacity: 0, duration: 0.24 }, T.brand);
+tl.to('#hDropBrand', { opacity: 0, duration: 0.24 }, T.brand);
+tl.to('#hDrop', { opacity: 0, duration: 0.24 }, T.brand);
+tl.fromTo('#hBrand', { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.55, ease: 'expo.out', immediateRender: false }, T.brand + 0.18);
+OM.sfx('pop', T.brand + 0.32, { gain: 0.65 });
+tl.to('#light', { opacity: 0, duration: 0.3 }, T.brand + 0.2);
+tl.to('#light', { x: 300, y: -140, scale: 1.22, duration: T.end - T.brand - 1.1, ease: 'none' }, T.brand + 0.3);
+tl.to('#light', { opacity: 0, duration: 0.5 }, T.end - 0.6);
+tl.fromTo('#hBrand .r2', { scaleX: 0 }, { scaleX: 1, duration: 0.44, ease: 'expo.out', immediateRender: false }, T.brand + 0.95);
+tl.fromTo('#hBrand .ln', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out', immediateRender: false }, T.brand + 1.02);
+tl.to('#hBrand .wrap', { y: -30, scale: 1.035, duration: T.end - T.brand - 1.0, ease: 'power1.out' }, T.brand + 1.0);
+
+/* ---------- 结尾 ---------- */
+tl.to({}, { duration: Math.max(0.1, Math.min(V.endHold, T.end - T.hold)) }, T.hold);
+tl.to({}, { duration: Math.max(0.05, T.end - T.hold - Math.min(V.endHold, T.end - T.hold)) }, T.hold + Math.min(V.endHold, T.end - T.hold));
+</script>
+</body>
+</html>

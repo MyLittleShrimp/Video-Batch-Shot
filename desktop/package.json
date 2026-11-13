@@ -1,0 +1,14 @@
+{
+  "name": "video-batch-shot",
+  "productName": "视频批量截图工具",
+  "version": "1.1.0",
+  "description": "视频批量截图工具",
+  "main": "main.js",
+  "author": "panda",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-packager": "^17.1.2"
+  }
+}

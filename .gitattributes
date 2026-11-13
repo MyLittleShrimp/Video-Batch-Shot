@@ -1,0 +1,19 @@
+# 默认按文本处理，行尾统一 LF；Windows 脚本与二进制单独指定
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.nsi text eol=crlf
+*.nsh text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.bmp binary
+*.woff binary
+*.woff2 binary
+*.exe binary
+*.mp4 binary
+*.wav binary
