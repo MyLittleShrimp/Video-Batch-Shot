@@ -8,11 +8,11 @@ dist/*.exe
 dist/*.msi
 dist/*.zip
 promo-film/out/*.mp4
+dist/*.mp4
 
 # 宣传片中间素材（渲染用的抽帧、片段、临时音轨、与 assets 重复的采集件）
 promo-film/assets/clip/
 promo-film/assets/ui-*.png
-promo-film/assets/sound.wav
 promo-film/directions/
 promo-film/.om/
 promo-film/*.png
