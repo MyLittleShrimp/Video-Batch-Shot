@@ -6,16 +6,16 @@
 
 | 文件 | 大小 | 说明 |
 | --- | --- | --- |
-| `视频批量截图工具_v1.1.0_安装包.exe` | 119 MB | Windows 10 / 11 x64，内置 Electron 与 ffmpeg，免装任何依赖 |
-| `promo-film-v1.1.0.mp4` | 42 MB | 30 秒宣传片，1920×1080 / 30fps |
+| `VideoBatchShot_v1.1.0_Setup.exe` | 119 MB | Windows 10 / 11 x64，内置 Electron 与 ffmpeg，免装任何依赖 |
+| `VideoBatchShot_v1.1.0_promo.mp4` | 42 MB | 30 秒宣传片，1920×1080 / 30fps |
 
 安装：双击 → 向导 → 装到 `%LOCALAPPDATA%\Programs\视频批量截图工具`，**不需要管理员权限**，可在「设置 → 应用」里卸载。
 
 SHA-256：
 
 ```
-91f054bfb681299975e4f552a2775ad0652c54c34133cd7b90d23e003e57043f  视频批量截图工具_v1.1.0_安装包.exe
-54f227ec6491a0ea67ff36135c8d7b2e70863c1ab1e6dcff02b70c0db6c917ed  promo-film-v1.1.0.mp4
+91f054bfb681299975e4f552a2775ad0652c54c34133cd7b90d23e003e57043f  VideoBatchShot_v1.1.0_Setup.exe
+54f227ec6491a0ea67ff36135c8d7b2e70863c1ab1e6dcff02b70c0db6c917ed  VideoBatchShot_v1.1.0_promo.mp4
 ```
 
 ## 这个版本有什么

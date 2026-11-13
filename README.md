@@ -24,13 +24,13 @@
 
 ## 下载
 
-到 [Releases](../../releases/latest) 下载 `视频批量截图工具_v1.1.0_安装包.exe`（约 119 MB）。
+到 [Releases](../../releases/latest) 下载 `VideoBatchShot_v1.1.0_Setup.exe`（约 119 MB）。
 
 - 双击 → 向导 → 装到 `%LOCALAPPDATA%\Programs\视频批量截图工具`，**不需要管理员权限**
 - 内置 Electron 运行时和 ffmpeg，目标机器不用另装任何东西
 - 桌面 + 开始菜单快捷方式，可在「设置 → 应用」里卸载
 
-同一个页面里还有 `promo-film-v1.1.0.mp4`——30 秒、1080p 的操作演示，上面那张动图就是它的片段。
+同一个页面里还有 `VideoBatchShot_v1.1.0_promo.mp4`——30 秒、1080p 的操作演示，上面那张动图就是它的片段。
 
 ## 界面
 
